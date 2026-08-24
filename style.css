@@ -1,39 +1,54 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* ==========================================
+   MOBILE CONTROLS (Responsive Touch UI)
+   ========================================== */
 
-html,
-body {
-  width: 100%;
-  height: 100%;
-
-  overflow: hidden;
-
-  background: #100c1a;
-}
-
-body {
-  width: 100vw;
-  height: 100vh;
-
-  overflow: hidden;
-}
-
-canvas {
-  display: block;
-
+/* Naka-hide by default sa PC / Desktop */
+.mobile-controls {
+  display: none;
   position: fixed;
-
+  bottom: 20px;
   left: 0;
-  top: 0;
+  right: 0;
+  padding: 0 20px;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  pointer-events: none; /* Para hindi harangan ang touch sa screen */
+}
 
-  width: 100vw;
-  height: 100vh;
+.d-pad, .action-btns {
+  display: flex;
+  gap: 12px;
+  pointer-events: auto; /* Aktibo ang touch sa buttons */
+}
 
-  background: #2b1d36;
+.touch-btn {
+  width: 60px;
+  height: 60px;
+  background: rgba(42, 26, 43, 0.85);
+  border: 2px solid #b8863f;
+  border-radius: 50%;
+  color: #e8b86d;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
 
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+.touch-btn:active {
+  background: #e8b86d;
+  color: #2a1a2b;
+  transform: scale(0.95);
+}
+
+/* LALABAS LAMANG ANG BUTTONS KAPAG TOUCHSCREEN DEVICE (Mobile/Tablet) */
+@media (hover: none) and (pointer: coarse) {
+  .mobile-controls {
+    display: flex;
+  }
 }
