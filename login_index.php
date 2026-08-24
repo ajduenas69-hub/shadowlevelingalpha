@@ -1,0 +1,281 @@
+<?php
+session_start();
+
+// If already logged in, go straight to the game
+if (!empty($_SESSION['user_id'])) {
+    header('Location: index.php');
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shadow Leveling — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky-rose:#d99a8b; --mauve:#8a5468; --shadow-purple:#3a2438;
+  --deep-plum:#2a1a2b; --gold:#e8b86d; --gold-dim:#b8863f;
+  --cream:#f5e6d8; --error:#d9645b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;font-family:'VT323',monospace;background:var(--shadow-purple)}
+.scene{position:fixed;inset:0;overflow:hidden}
+.layer{position:absolute;top:0;left:0;height:100%;width:200%;display:flex}
+.layer img{height:100%;width:50%;object-fit:cover;display:block;image-rendering:pixelated}
+.layer-bg{animation:scroll 90s linear infinite}
+.layer-mid{animation:scroll 32s linear infinite}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.grade{position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 40%,rgba(232,184,109,.08),transparent 55%),
+  linear-gradient(to bottom,rgba(42,26,43,.15),rgba(42,26,43,.55) 78%,rgba(20,12,22,.85))}
+.firefly{position:fixed;width:3px;height:3px;background:var(--gold);border-radius:50%;
+  box-shadow:0 0 6px 2px rgba(232,184,109,.9);opacity:0;pointer-events:none;
+  animation:drift 9s ease-in-out infinite, glow 2.4s ease-in-out infinite}
+@keyframes drift{0%{transform:translate(0,0);opacity:0}10%{opacity:.9}50%{transform:translate(30px,-40px)}90%{opacity:.6}100%{transform:translate(-20px,-90px);opacity:0}}
+@keyframes glow{0%,100%{opacity:.3}50%{opacity:1}}
+.wrap{position:relative;z-index:5;height:100%;display:flex;align-items:center;justify-content:center;padding:20px}
+.title-block{position:absolute;top:8%;left:50%;transform:translateX(-50%);text-align:center;z-index:5}
+.title-block h1{font-family:'Press Start 2P',monospace;font-size:22px;color:var(--cream);
+  text-shadow:3px 3px 0 var(--shadow-purple),0 0 18px rgba(232,184,109,.35);letter-spacing:2px;margin:0}
+.title-block p{font-size:16px;color:var(--gold);letter-spacing:3px;margin:8px 0 0;text-transform:uppercase;opacity:.85}
+.panel{width:360px;max-width:92vw;background:linear-gradient(180deg,rgba(58,36,56,.96),rgba(32,20,33,.97));
+  border:3px solid var(--gold-dim);
+  box-shadow:0 0 0 3px var(--deep-plum),0 0 0 6px var(--gold-dim),0 18px 40px rgba(0,0,0,.55),inset 0 0 24px rgba(0,0,0,.4);
+  position:relative}
+.panel::before{content:"";position:absolute;inset:8px;border:1px solid rgba(232,184,109,.25);pointer-events:none}
+.tabs{display:flex}
+.tab{flex:1;text-align:center;padding:14px 6px 10px;font-family:'Press Start 2P',monospace;font-size:10px;
+  letter-spacing:1px;color:var(--gold-dim);background:rgba(0,0,0,.25);border:none;
+  border-bottom:3px solid var(--gold-dim);cursor:pointer}
+.tab:hover{color:var(--gold)}
+.tab.active{color:var(--cream);background:transparent;border-bottom:3px solid var(--gold)}
+.panel-body{padding:26px 24px 24px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:15px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.field input{width:100%;padding:10px 12px;font-family:'VT323',monospace;font-size:18px;letter-spacing:1px;
+  background:var(--deep-plum);border:2px solid var(--gold-dim);color:var(--cream);outline:none}
+.field input:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(232,184,109,.25)}
+.field input::placeholder{color:#7a6472}
+.btn{width:100%;padding:12px 10px;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:1px;
+  color:var(--deep-plum);background:var(--gold);border:none;border-bottom:4px solid var(--gold-dim);
+  cursor:pointer;margin-top:6px}
+.btn:hover{background:#f0c680}
+.btn:active{transform:translateY(3px);border-bottom-width:1px}
+.msg{min-height:20px;font-size:15px;letter-spacing:1px;margin-top:12px;text-align:center}
+.msg.error{color:var(--error)}
+.msg.success{color:#9fd97e}
+.session-view{text-align:center;padding:10px 4px 6px}
+.session-view .avatar{width:56px;height:56px;margin:0 auto 14px;background:var(--deep-plum);
+  border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;
+  font-family:'Press Start 2P',monospace;font-size:18px;color:var(--gold)}
+.session-view h2{font-family:'Press Start 2P',monospace;font-size:13px;color:var(--cream);letter-spacing:1px;margin:0 0 6px}
+.session-view p{font-size:16px;color:#c9a9b8;margin:0 0 20px;letter-spacing:1px}
+.hidden{display:none!important}
+@media (max-width:420px){.title-block h1{font-size:16px}.panel{width:94vw}}
+</style>
+</head>
+<body>
+
+<!-- Audio Element for Background Music -->
+<audio id="bgMusic" autoplay loop>
+  <source src="assets/sounds/Sketchbook_VERSE" type="audio/mpeg">
+  <source src="assets/sounds/Sketchbook_VERSE.mp3" type="audio/mpeg">
+  <source src="assets/sounds/Sketchbook_VERSE.ogg" type="audio/ogg">
+  <source src="assets/sounds/Sketchbook_VERSE.wav" type="audio/wav">
+</audio>
+
+<div class="scene">
+  <div class="layer layer-bg">
+    <img src="background.png" alt="">
+    <img src="background.png" alt="">
+  </div>
+  <div class="layer layer-mid">
+    <img src="middleground.png" alt="">
+    <img src="middleground.png" alt="">
+  </div>
+</div>
+<div class="grade"></div>
+<div id="fireflies"></div>
+
+<div class="title-block">
+  <h1>Shadow Leveling</h1>
+  <p>the town at dusk</p>
+</div>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="login">Login</button>
+      <button class="tab" data-tab="signup">Create Acc</button>
+    </div>
+    <div class="panel-body">
+
+      <form id="loginForm" class="form">
+        <div class="field">
+          <label for="loginUser">Username</label>
+          <input id="loginUser" type="text" placeholder="traveler" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="loginPass">Password</label>
+          <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn">Enter Town</button>
+        <div class="msg" id="loginMsg"></div>
+      </form>
+
+      <form id="signupForm" class="form hidden">
+        <div class="field">
+          <label for="suUser">Username</label>
+          <input id="suUser" type="text" placeholder="choose a name" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="suPass">Password</label>
+          <input id="suPass" type="password" placeholder="create a password" autocomplete="new-password" required minlength="4">
+        </div>
+        <div class="field">
+          <label for="suPass2">Confirm Password</label>
+          <input id="suPass2" type="password" placeholder="repeat the password" autocomplete="new-password" required minlength="4">
+        </div>
+        <button type="submit" class="btn">Create Account</button>
+        <div class="msg" id="signupMsg"></div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var GAME_URL = 'index.php';
+
+  var tabs = document.getElementById('tabs');
+  var loginForm = document.getElementById('loginForm');
+  var signupForm = document.getElementById('signupForm');
+  var loginMsg = document.getElementById('loginMsg');
+  var signupMsg = document.getElementById('signupMsg');
+
+  function showTab(name){
+    Array.prototype.forEach.call(tabs.children, function(t){
+      t.classList.toggle('active', t.dataset.tab === name);
+    });
+    loginForm.classList.toggle('hidden', name !== 'login');
+    signupForm.classList.toggle('hidden', name !== 'signup');
+    loginMsg.textContent = '';
+    signupMsg.textContent = '';
+  }
+
+  tabs.addEventListener('click', function(e){
+    var btn = e.target.closest('.tab');
+    if(!btn) return;
+    showTab(btn.dataset.tab);
+  });
+
+  function goToGame(){
+    window.location.href = GAME_URL;
+  }
+
+  function postJSON(url, body){
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body)
+    }).then(function(res){ return res.json(); });
+  }
+
+  loginForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var u = document.getElementById('loginUser').value.trim();
+    var p = document.getElementById('loginPass').value;
+
+    loginMsg.className = 'msg';
+    loginMsg.textContent = 'Checking...';
+
+    postJSON('login.php', { username: u, password: p })
+      .then(function(data){
+        if(!data.ok){
+          loginMsg.className = 'msg error';
+          loginMsg.textContent = data.error || 'Something went wrong, please try again.';
+          return;
+        }
+        loginMsg.className = 'msg success';
+        loginMsg.textContent = 'Thanks! Entering...';
+        setTimeout(goToGame, 400);
+      })
+      .catch(function(){
+        loginMsg.className = 'msg error';
+        loginMsg.textContent = 'Could not reach the server.';
+      });
+  });
+
+  signupForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var u = document.getElementById('suUser').value.trim();
+    var p = document.getElementById('suPass').value;
+    var p2 = document.getElementById('suPass2').value;
+
+    if(p !== p2){
+      signupMsg.className = 'msg error';
+      signupMsg.textContent = 'Passwords do not match.';
+      return;
+    }
+
+    signupMsg.className = 'msg';
+    signupMsg.textContent = 'Creating account...';
+
+    postJSON('signup.php', { username: u, password: p, password2: p2 })
+      .then(function(data){
+        if(!data.ok){
+          signupMsg.className = 'msg error';
+          signupMsg.textContent = data.error || 'Something went wrong, please try again.';
+          return;
+        }
+        signupMsg.className = 'msg success';
+        signupMsg.textContent = 'Account created! Entering...';
+        setTimeout(goToGame, 500);
+      })
+      .catch(function(){
+        signupMsg.className = 'msg error';
+        signupMsg.textContent = 'Could not reach the server.';
+      });
+  });
+
+  var fContainer = document.getElementById('fireflies');
+  for(var i=0;i<14;i++){
+    var f = document.createElement('div');
+    f.className = 'firefly';
+    f.style.left = (Math.random()*100)+'vw';
+    f.style.top = (55 + Math.random()*35)+'vh';
+    f.style.animationDelay = (Math.random()*9)+'s, '+(Math.random()*2.4)+'s';
+    f.style.animationDuration = (7+Math.random()*6)+'s, '+(1.8+Math.random()*1.4)+'s';
+    fContainer.appendChild(f);
+  }
+
+  // --- AUDIO AUTOPLAY HANDLER ---
+  var bgAudio = document.getElementById('bgMusic');
+  if (bgAudio) {
+    bgAudio.volume = 0.5; // Optional: Itakda ang lakas ng tunog (0.0 hanggang 1.0)
+    
+    var startAudio = function() {
+      bgAudio.play().then(function() {
+        // Kapag matagumpay na nag-play, tanggalin ang interaction listeners
+        document.removeEventListener('click', startAudio);
+        document.removeEventListener('keydown', startAudio);
+      }).catch(function(err) {
+        // Pag hinarang ng browser autoplay policy, maghihintay ito sa unang click o press ng user
+      });
+    };
+
+    startAudio();
+    document.addEventListener('click', startAudio);
+    document.addEventListener('keydown', startAudio);
+  }
+
+})();
+</script>
+</body>
+</html>

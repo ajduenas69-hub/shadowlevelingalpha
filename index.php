@@ -1,0 +1,106 @@
+<?php
+session_start();
+
+// Kailangang naka-login bago makapasok sa laro
+if (empty($_SESSION['user_id'])) {
+    header('Location: login_index.php');
+    exit;
+}
+
+// Inaayos ang Undefined variable warning gamit ang Fallback logic
+$rawUsername = $_SESSION['username'] ?? $_SESSION['user'] ?? 'Player';
+$username = htmlspecialchars($rawUsername, ENT_QUOTES, 'UTF-8');
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>ShadowLeveling</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <canvas id="game"></canvas>
+
+  <!-- SETTINGS CONTAINER (Upper Right) -->
+  <div style="position:fixed;top:12px;right:16px;z-index:10;font-family:monospace;">
+    <!-- Settings Button -->
+    <button id="settingsBtn" style="background:none;border:none;padding:0;cursor:pointer;outline:none;display:flex;align-items:center;justify-content:center;">
+      <img 
+        src="assets/buttons/setting.png" 
+        onerror="this.onerror=null; this.src='settings.png';" 
+        alt="Settings" 
+        style="width:30px;height:30px;display:block;image-rendering:pixelated;filter:drop-shadow(0px 3px 6px rgba(0, 0, 0, 0.8));"
+      >
+    </button>
+
+    <!-- Dropdown Menu / Settings Modal -->
+    <div id="settingsMenu" style="display:none;position:absolute;top:40px;right:0;background:rgba(20,12,22,.95);border:1px solid #b8863f;padding:12px;min-width:160px;text-align:center;box-shadow:0px 4px 12px rgba(0,0,0,0.8);border-radius:4px;">
+      <div style="color:#e8b86d;font-size:12px;margin-bottom:8px;border-bottom:1px solid #b8863f;padding-bottom:6px;">
+        User: <?php echo $username; ?>
+      </div>
+
+      <!-- GRAPHICS TOGGLE SWITCH -->
+      <label style="display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:12px;margin-bottom:10px;cursor:pointer;user-select:none;">
+        <span>Bloom</span>
+        <input type="checkbox" id="nightModeToggle" style="cursor:pointer;accent-color:#e8b86d;">
+      </label>
+
+      <!-- MUSIC VOLUME SLIDER -->
+      <div style="display:flex;flex-direction:column;align-items:flex-start;color:#fff;font-size:12px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:4px;">
+          <span>Music</span>
+          <span id="volumeValue">50%</span>
+        </div>
+        <input 
+          type="range" 
+          id="bgmVolumeSlider" 
+          min="0" 
+          max="1" 
+          step="0.01" 
+          value="0.5" 
+          style="width:100%;cursor:pointer;accent-color:#e8b86d;"
+        >
+      </div>
+
+      <a
+        href="#"
+        id="logoutLink"
+        style="display:block;font-size:13px;color:#fff;background:#d93838;padding:6px 10px;border:1px solid #ff5555;text-decoration:none;border-radius:3px;"
+      >Logout</a>
+    </div>
+  </div>
+
+  <script>
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsMenu = document.getElementById('settingsMenu');
+
+    settingsMenu.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+
+    // Toggle settings menu visibility
+    settingsBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      settingsMenu.style.display = settingsMenu.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.addEventListener('click', function() {
+      settingsMenu.style.display = 'none';
+    });
+
+    // Logout function
+    document.getElementById('logoutLink').addEventListener('click', function(e){
+      e.preventDefault();
+      fetch('logout.php', { method: 'POST', credentials: 'same-origin' })
+        .then(function(){ window.location.href = 'login_index.php'; });
+    });
+  </script>
+
+  <!-- External Scripts -->
+  <script src="enemies.js"></script>
+  <script src="game.js"></script>
+
+</body>
+</html>
