@@ -1,12 +1,3 @@
-<?php
-session_start();
-
-// If already logged in, go straight to the game
-if (!empty($_SESSION['user_id'])) {
-    header('Location: index.php');
-    exit;
-}
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,19 +59,12 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:'VT323',monospace;bac
 .msg{min-height:20px;font-size:15px;letter-spacing:1px;margin-top:12px;text-align:center}
 .msg.error{color:var(--error)}
 .msg.success{color:#9fd97e}
-.session-view{text-align:center;padding:10px 4px 6px}
-.session-view .avatar{width:56px;height:56px;margin:0 auto 14px;background:var(--deep-plum);
-  border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;
-  font-family:'Press Start 2P',monospace;font-size:18px;color:var(--gold)}
-.session-view h2{font-family:'Press Start 2P',monospace;font-size:13px;color:var(--cream);letter-spacing:1px;margin:0 0 6px}
-.session-view p{font-size:16px;color:#c9a9b8;margin:0 0 20px;letter-spacing:1px}
 .hidden{display:none!important}
 @media (max-width:420px){.title-block h1{font-size:16px}.panel{width:94vw}}
 </style>
 </head>
 <body>
 
-<!-- Audio Element for Background Music -->
 <audio id="bgMusic" autoplay loop>
   <source src="assets/sounds/Sketchbook_VERSE" type="audio/mpeg">
   <source src="assets/sounds/Sketchbook_VERSE.mp3" type="audio/mpeg">
@@ -150,7 +134,18 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:'VT323',monospace;bac
 
 <script>
 (function(){
-  var GAME_URL = 'index.php';
+  var GAME_URL = 'index.html';
+
+  if (localStorage.getItem('currentUser')) {
+    window.location.href = GAME_URL;
+  }
+
+  function getUsers() {
+    return JSON.parse(localStorage.getItem('usersDB') || '{}');
+  }
+  function saveUsers(users) {
+    localStorage.setItem('usersDB', JSON.stringify(users));
+  }
 
   var tabs = document.getElementById('tabs');
   var loginForm = document.getElementById('loginForm');
@@ -178,38 +173,30 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:'VT323',monospace;bac
     window.location.href = GAME_URL;
   }
 
-  function postJSON(url, body){
-    return fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify(body)
-    }).then(function(res){ return res.json(); });
-  }
-
   loginForm.addEventListener('submit', function(e){
     e.preventDefault();
     var u = document.getElementById('loginUser').value.trim();
     var p = document.getElementById('loginPass').value;
 
-    loginMsg.className = 'msg';
-    loginMsg.textContent = 'Checking...';
+    var users = getUsers();
 
-    postJSON('login.php', { username: u, password: p })
-      .then(function(data){
-        if(!data.ok){
-          loginMsg.className = 'msg error';
-          loginMsg.textContent = data.error || 'Something went wrong, please try again.';
-          return;
-        }
-        loginMsg.className = 'msg success';
-        loginMsg.textContent = 'Thanks! Entering...';
-        setTimeout(goToGame, 400);
-      })
-      .catch(function(){
-        loginMsg.className = 'msg error';
-        loginMsg.textContent = 'Could not reach the server.';
-      });
+    if (!users[u]) {
+      loginMsg.className = 'msg error';
+      loginMsg.textContent = 'User not found';
+      return;
+    }
+
+    if (users[u].password !== p) {
+      loginMsg.className = 'msg error';
+      loginMsg.textContent = 'Wrong password';
+      return;
+    }
+
+    localStorage.setItem('currentUser', u);
+
+    loginMsg.className = 'msg success';
+    loginMsg.textContent = 'Thanks! Entering...';
+    setTimeout(goToGame, 400);
   });
 
   signupForm.addEventListener('submit', function(e){
@@ -224,24 +211,22 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:'VT323',monospace;bac
       return;
     }
 
-    signupMsg.className = 'msg';
-    signupMsg.textContent = 'Creating account...';
+    var users = getUsers();
 
-    postJSON('signup.php', { username: u, password: p, password2: p2 })
-      .then(function(data){
-        if(!data.ok){
-          signupMsg.className = 'msg error';
-          signupMsg.textContent = data.error || 'Something went wrong, please try again.';
-          return;
-        }
-        signupMsg.className = 'msg success';
-        signupMsg.textContent = 'Account created! Entering...';
-        setTimeout(goToGame, 500);
-      })
-      .catch(function(){
-        signupMsg.className = 'msg error';
-        signupMsg.textContent = 'Could not reach the server.';
-      });
+    if (users[u]) {
+      signupMsg.className = 'msg error';
+      signupMsg.textContent = 'Username is already taken.';
+      return;
+    }
+
+    users[u] = { password: p };
+    saveUsers(users);
+
+    localStorage.setItem('currentUser', u);
+
+    signupMsg.className = 'msg success';
+    signupMsg.textContent = 'Account created! Entering...';
+    setTimeout(goToGame, 500);
   });
 
   var fContainer = document.getElementById('fireflies');
@@ -255,19 +240,15 @@ html,body{margin:0;height:100%;overflow:hidden;font-family:'VT323',monospace;bac
     fContainer.appendChild(f);
   }
 
-  // --- AUDIO AUTOPLAY HANDLER ---
   var bgAudio = document.getElementById('bgMusic');
   if (bgAudio) {
-    bgAudio.volume = 0.5; // Optional: Itakda ang lakas ng tunog (0.0 hanggang 1.0)
+    bgAudio.volume = 0.5;
     
     var startAudio = function() {
       bgAudio.play().then(function() {
-        // Kapag matagumpay na nag-play, tanggalin ang interaction listeners
         document.removeEventListener('click', startAudio);
         document.removeEventListener('keydown', startAudio);
-      }).catch(function(err) {
-        // Pag hinarang ng browser autoplay policy, maghihintay ito sa unang click o press ng user
-      });
+      }).catch(function(err) {});
     };
 
     startAudio();
