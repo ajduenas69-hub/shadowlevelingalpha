@@ -705,3 +705,48 @@
 
   boot();
 })();
+// ==========================================
+// MOBILE TOUCH EVENT LISTENERS
+// ==========================================
+
+const btnLeft = document.getElementById('btnLeft');
+const btnRight = document.getElementById('btnRight');
+const btnJump = document.getElementById('btnJump');
+const btnAttack = document.getElementById('btnAttack');
+
+// Tiyaking umiiral ang keys object para sa movement control ng laro mo
+if (typeof keys === 'undefined') {
+  var keys = { left: false, right: false, up: false, attack: false };
+}
+
+// LEFT BUTTON
+if (btnLeft) {
+  btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); keys.left = true; });
+  btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); keys.left = false; });
+}
+
+// RIGHT BUTTON
+if (btnRight) {
+  btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); keys.right = true; });
+  btnRight.addEventListener('touchend', (e) => { e.preventDefault(); keys.right = false; });
+}
+
+// JUMP BUTTON
+if (btnJump) {
+  btnJump.addEventListener('touchstart', (e) => { 
+    e.preventDefault(); 
+    keys.up = true;
+    if (typeof jump === 'function') jump(); // Tawagin ang jump function mo kung mayroon
+  });
+  btnJump.addEventListener('touchend', (e) => { e.preventDefault(); keys.up = false; });
+}
+
+// ATTACK BUTTON
+if (btnAttack) {
+  btnAttack.addEventListener('touchstart', (e) => { 
+    e.preventDefault(); 
+    keys.attack = true;
+    if (typeof attack === 'function') attack(); // Tawagin ang attack function mo kung mayroon
+  });
+  btnAttack.addEventListener('touchend', (e) => { e.preventDefault(); keys.attack = false; });
+}
